@@ -81,42 +81,71 @@ def get_hull_points():
 
     return _hull_points
 
-def create_blank(width, height, rgb_color=(255, 255, 255)):
-    """Create new image(numpy array) filled with certain color in RGB"""
-    # Create black blank image
-    image = np.zeros((height, width, 3), np.uint8)
-
-    # Since OpenCV uses BGR, convert the color first
-    color = tuple(reversed(rgb_color))
-    # Fill image with color
-    image[:] = color
-
-    return image
-
-
-
 def display():
     # image width, height
-    img_width = 640
-    img_height = 480
+    img_width = 350
+    img_height = 300
 
     # draw all points & draw convexhull
-    img1 = _draw_all_points(_points, img_height, img_width)
-    img2 = _draw_hull_points(_hull_points, img_height, img_width)
-    img3 = _draw_hull_points(_hull_points, img_height, img_width)
-    img4 = _draw_all_points(_points, img_height, img_width)
+    img1 = _draw_all_points(_points, img_height, img_width, "all point")
+    img2 = _draw_all(_hull_points, img_height, img_width, "external point")
+    img3 = _draw_hull(_hull_points, img_height, img_width, "all point convex hull")
+    img4 = _draw_hull_points(_points, img_height, img_width, "convex hull")
     dstimage = create_image_multiple(img_height, img_width, 3, 2, 2)
     showMultiImage(dstimage, img1, img_height, img_width, 3, 0, 0)
     showMultiImage(dstimage, img2, img_height, img_width, 3, 0, 1)
-    showMultiImage(dstimage, img3, img_height, img_width, 3, 1, 0)
-    showMultiImage(dstimage, img4, img_height, img_width, 3, 1, 1)
+    showMultiImage(dstimage, img4, img_height, img_width, 3, 1, 0)
+    showMultiImage(dstimage, img3, img_height, img_width, 3, 1, 1)
 
-    cv2.imshow('img', dstimage)
+    cv2.imshow('convex hull', dstimage)
 
     cv2.waitKey()
     cv2.destroyAllWindows()
 
-def _draw_all_points(_points, img_height, img_width) :
+def _draw_hull(_hull_points, img_height, img_width, title):
+    # hull points
+    hx = [p.x for p in _hull_points]
+    hy = [p.y for p in _hull_points]
+
+    # Create black blank image
+    img = create_image(img_height, img_width, 3)
+
+
+    # Draw line  from the hull point to the hull point
+    # x-y offset, +150
+    for hp in range(0, len(_hull_points)):
+        cv2.circle(img, (hx[hp] + 150, hy[hp] + 150), 1, (0, 0, 0), thickness=2, lineType=1, shift=0)
+
+    for hp in range(0, len(_hull_points) - 1):
+        img = cv2.line(img, (hx[hp] + 150, hy[hp] + 150), (hx[hp + 1] + 150, hy[hp + 1] + 150), (0, 0, 0), 2)
+
+    # Get a contour
+    imgray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    ret, thr = cv2.threshold(imgray, 127, 255, 0)
+    _, contours, _ = cv2.findContours(thr, cv2.RETR_TREE,
+                                      cv2.CHAIN_APPROX_SIMPLE)
+
+    cnt = contours[1]
+    # check a convexhull
+    check = cv2.isContourConvex(cnt)
+    if not check:
+        cnt = cv2.convexHull(cnt)
+
+    # contour area
+    area = cv2.contourArea(cnt)
+    # contour length
+    perimeter = cv2.arcLength(cnt, True)
+
+    cv2.drawContours(img, [cnt], 0, (0, 0, 255), 3)
+    cv2.putText(img, "area: %d" % area, (10, 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
+    cv2.putText(img, "perimeter: %f" % perimeter, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
+
+    cv2.putText(img, "%s" % title, (int(img_width / 2) -100- int(len(title) / 2), img_height - 15),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
+    print(int(img_width / 2) - int(len(title) * 2))
+    return img
+
+def _draw_all(_points, img_height, img_width, title) :
     # all points
     x = [p.x for p in _points]
     y = [p.y for p in _points]
@@ -127,9 +156,48 @@ def _draw_all_points(_points, img_height, img_width) :
     # all points
     for p in range(0, len(_points)):
         cv2.circle(img, (x[p] + 150, y[p] + 150), 1, (0, 0, 0), thickness=2, lineType=1, shift=0)
+
+    # Get a contour
+    imgray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    ret, thr = cv2.threshold(imgray, 127, 255, 0)
+    _, contours, _ = cv2.findContours(thr, cv2.RETR_TREE,
+                                      cv2.CHAIN_APPROX_SIMPLE)
+
+    cnt = contours[1]
+    # check a convexhull
+    check = cv2.isContourConvex(cnt)
+    if not check:
+        cnt = cv2.convexHull(cnt)
+
+    # contour area
+    area = cv2.contourArea(cnt)
+    # contour length
+    perimeter = cv2.arcLength(cnt, True)
+
+    cv2.drawContours(img, [cnt], 0, (0, 0, 255), 3)
+    cv2.putText(img, "%s" % title, (int(img_width / 2) - 70 - int(len(title) / 2), img_height - 15),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
+
     return img
 
-def _draw_hull_points(_hull_points, img_height, img_width):
+
+def _draw_all_points(_points, img_height, img_width, title) :
+    # all points
+    x = [p.x for p in _points]
+    y = [p.y for p in _points]
+
+    # Create black blank image
+    img = create_image(img_height, img_width, 3)
+
+    # all points
+    for p in range(0, len(_points)):
+        cv2.circle(img, (x[p] + 150, y[p] + 150), 1, (0, 0, 0), thickness=2, lineType=1, shift=0)
+
+        cv2.putText(img, "%s" % title, (int(img_width / 2) - 50 - int(len(title) / 2), img_height - 15),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
+    return img
+
+def _draw_hull_points(_hull_points, img_height, img_width, title):
     # hull points
     hx = [p.x for p in _hull_points]
     hy = [p.y for p in _hull_points]
@@ -162,6 +230,8 @@ def _draw_hull_points(_hull_points, img_height, img_width):
     cv2.drawContours(img, [cnt], 0, (0, 0, 255), 3)
     cv2.putText(img, "area: %d" % area, (10, 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
     cv2.putText(img, "perimeter: %f" % perimeter, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
+
+    cv2.putText(img, "%s" % title, (int(img_width / 2) - int(len(title)/2)- 70 , img_height - 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
 
     return img
 
