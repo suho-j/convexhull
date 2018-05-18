@@ -81,20 +81,6 @@ def get_hull_points():
 
     return _hull_points
 
-def create_blank(width, height, rgb_color=(255, 255, 255)):
-    """Create new image(numpy array) filled with certain color in RGB"""
-    # Create black blank image
-    image = np.zeros((height, width, 3), np.uint8)
-
-    # Since OpenCV uses BGR, convert the color first
-    color = tuple(reversed(rgb_color))
-    # Fill image with color
-    image[:] = color
-
-    return image
-
-
-
 def display():
     # image width, height
     img_width = 640
