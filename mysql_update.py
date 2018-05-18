@@ -1,5 +1,6 @@
 import pymysql
 import datetime
+from collections import namedtuple
 
 HOST = '192.168.0.41'
 PORT = 3306
@@ -8,6 +9,7 @@ PASSWORD = '123123'
 DATABASE = 'o2'
 TABLENAME   = 'jointxyz'
 
+Point = namedtuple('Point', 'x y')
 
 def SQL_EXECUTE(query_string, tablename = TABLENAME) : 
     try :

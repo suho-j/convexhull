@@ -5,18 +5,16 @@ import random
 import cv2
 import numpy as np
 
-Point = namedtuple('Point', 'x y')
+Point = namedtuple('Point', ['x', 'y'])
 
 
 #class ConvexHull(object):
-_points = []
-_hull_points = []
+#_points = []
+#_hull_points = []
 
 def __init__(self):
     pass
 
-def _add(point):
-    _points.append(point)
 
 def _get_orientation(origin, p1, p2):
     '''
@@ -33,12 +31,13 @@ def _get_orientation(origin, p1, p2):
 
     return difference
 
-def compute_hull():
+def compute_hull(all_points):
     '''
     Computes the points that make up the convex hull.
     :return:
     '''
-    points = _points
+    hull_points = []
+    points = all_points
 
     # get leftmost point
     start = points[0]
@@ -49,11 +48,10 @@ def compute_hull():
             start = p
 
     point = start
-    _hull_points.append(start)
+    hull_points.append(start)
 
     far_point = None
     while far_point is not start:
-
         # get the first point (initial max) to use to compare with others
         p1 = None
         for p in points:
@@ -74,14 +72,17 @@ def compute_hull():
                 if direction > 0:
                     far_point = p2
 
-        _hull_points.append(far_point)
+        hull_points.append(far_point)
         point = far_point
+    return hull_points
 
-def get_hull_points():
-    if _points and not _hull_points:
-        compute_hull()
+def get_hull_points(all_points):
+    hull_points= []
 
-    return _hull_points
+    if all_points and not hull_points:
+        hull_points = compute_hull(all_points)
+
+    return hull_points
 
 # 흰색 이미지를 생성
 # h : 높이
@@ -173,34 +174,65 @@ def _draw_hull_points(_hull_points, img_height, img_width, title):
                 1.0, (0, 0, 0), 2)
     return img
 
-def display():
+def draw_image(points, title) :
     # image width, height
     img_width = 640
     img_height = 480
 
     # draw all points & draw convexhull
-    img1 = _draw_all_points(_points, img_height, img_width, "all points")
-    img2 = _draw_hull_points(_hull_points, img_height, img_width, "convex hull")
-    img3 = _draw_hull_points(_hull_points, img_height, img_width, "convex hull")
-    img4 = _draw_all_points(_points, img_height, img_width, "all points")
+    img = _draw_hull_points(points, img_height, img_width, title)
+    return img
+
+def display(img1, img2, img3, img4):
+    # image width, height
+    img_width = 640
+    img_height = 480
+
+    # draw all points & draw convexhull
     dstimage = create_image_multiple(img_height, img_width, 3, 2, 2)
     showMultiImage(dstimage, img1, img_height, img_width, 3, 0, 0)
     showMultiImage(dstimage, img2, img_height, img_width, 3, 0, 1)
     showMultiImage(dstimage, img3, img_height, img_width, 3, 1, 0)
-    showMultiImage(dstimage, img4, img_height, img_width, 3, 1, 1)
+    #showMultiImage(dstimage, img4, img_height, img_width, 3, 1, 1)
 
     cv2.imshow('img', dstimage)
 
     cv2.waitKey()
     cv2.destroyAllWindows()
 
+
 def main():
     #ch = ConvexHull()
-    for _ in range(50):
-        _add(Point(random.randint(-100, 100), random.randint(-100, 100)))
+    #for _ in range(50):
+    #    _add(Point(random.randint(-100, 100), random.randint(-100, 100)))
+    rWrist_x, rWrist_y, rWrist_z = ms.SQL_SELECT()
 
-    print("Points on hull:", get_hull_points())
-    display()
+    xy_points = _add(rWrist_x, rWrist_y)
+    yz_points = _add(rWrist_y, rWrist_z)
+    xz_points = _add(rWrist_x, rWrist_z)
+
+    xy_hull_points = get_hull_points(xy_points)
+
+    yz_hull_points = get_hull_points(yz_points)
+
+    xz_hull_points = get_hull_points(xz_points)
+
+    print(xy_hull_points)
+    img1 = draw_image(xy_hull_points,"x-y")
+    img2 = draw_image(yz_hull_points, "y-z")
+    img3 = draw_image(yz_hull_points, "x-z")
+    #img4 = draw_image(xz_points, "xz")
+    display(img1, img2, img3, img3)
+
+def _add(array1, array2):
+    all_points =[]
+    for i in range(0,len(array1)):
+        temp = array1[i] + array2[i]
+        temp1 = int((temp[0]) * 100 + 150)
+        temp2 = int((temp[1]) * 100 + 150)
+        p = Point(temp1, temp2)
+        all_points.append(p)
+    return all_points
 
 
 if __name__ == '__main__':
