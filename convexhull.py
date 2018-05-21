@@ -39,13 +39,16 @@ def compute_hull(all_points):
     hull_points = []
     points = all_points
 
-    # get leftmost point
+    # get leftmost and bottom point because ccw(counter clock wise)
     start = points[0]
     min_x = start.x
     for p in points[1:]:
         if p.x < min_x:
             min_x = p.x
             start = p
+        elif p.x == min_x:
+            if p.y < start.y:
+                start = p
 
     point = start
     hull_points.append(start)
@@ -74,6 +77,7 @@ def compute_hull(all_points):
 
         hull_points.append(far_point)
         point = far_point
+
     return hull_points
 
 def get_hull_points(all_points):
@@ -202,32 +206,63 @@ def display(img1, img2, img3, img4):
 
 
 def main():
+    # xy - yz - xz => xy - yz - xz
     #ch = ConvexHull()
     #for _ in range(50):
     #    _add(Point(random.randint(-100, 100), random.randint(-100, 100)))
     rWrist_x, rWrist_y, rWrist_z = ms.SQL_SELECT()
+    print(rWrist_y)
+    all_points_xy, all_points_yz, all_points_xz = _add3(rWrist_x, rWrist_y, rWrist_z)
+    #xy_points = _add(rWrist_x, rWrist_y)
+    #yz_points = _add(rWrist_y, rWrist_z)
+    #xz_points = _add(rWrist_x, rWrist_z)
+    print(all_points_xy)
+    print("all_points_xy")
+    print(all_points_yz)
+    print("all_points_yz")
+    print(all_points_xz)
+    print("all_points_xz")
 
-    xy_points = _add(rWrist_x, rWrist_y)
-    yz_points = _add(rWrist_y, rWrist_z)
-    xz_points = _add(rWrist_x, rWrist_z)
+    #if True:
+    #    return
 
-    xy_hull_points = get_hull_points(xy_points)
+    hull_points_xy = get_hull_points(all_points_xy)
+    hull_points_yz = get_hull_points(all_points_yz)
+    hull_points_xz = get_hull_points(all_points_xz)
 
-    yz_hull_points = get_hull_points(yz_points)
-
-    xz_hull_points = get_hull_points(xz_points)
-
-    print(xy_hull_points)
-    img1 = draw_image(xy_hull_points,"x-y")
-    img2 = draw_image(yz_hull_points, "y-z")
-    img3 = draw_image(yz_hull_points, "x-z")
+    img1 = draw_image(hull_points_xy,"x-y")
+    img2 = draw_image(hull_points_yz, "y-z")
+    img3 = draw_image(hull_points_xz, "x-z")
     #img4 = draw_image(xz_points, "xz")
     display(img1, img2, img3, img3)
+
+
+def _add3(array1, array2, array3):
+    all_points_xy = []
+    all_points_yz = []
+    all_points_xz = []
+
+    for i in range(0, len(array1)):
+        temp = array1[i] + array2[i] + array3[i]
+        if temp[0] == 0 or temp[0] == 1 or temp[1] == 0 or temp[1] == 1 or temp[2] == 0 or temp[2] == 1:
+            continue
+        print(i)
+        temp1 = int((temp[0]) * 1000)
+        temp2 = int((temp[1]) * 1000)
+        temp3 = int((temp[2]) * 1000)
+        p_xy = Point(temp1, temp2)
+        p_yz = Point(temp2, temp3)
+        p_xz = Point(temp1, temp3)
+        all_points_xy.append(p_xy)
+        all_points_yz.append(p_yz)
+        all_points_xz.append(p_xz)
+    return all_points_xy, all_points_yz, all_points_xz
 
 def _add(array1, array2):
     all_points =[]
     for i in range(0,len(array1)):
         temp = array1[i] + array2[i]
+
         temp1 = int((temp[0]) * 100 + 150)
         temp2 = int((temp[1]) * 100 + 150)
         p = Point(temp1, temp2)
