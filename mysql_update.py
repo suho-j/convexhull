@@ -7,7 +7,7 @@ PORT = 3306
 USER = 'kgm'
 PASSWORD = '123123'
 DATABASE = 'o2'
-TABLENAME   = 'rwrist_test'
+TABLENAME   = 'rwrist_test3'
 
 Point = namedtuple('Point', 'x y')
 
@@ -64,4 +64,4 @@ def SQL_CREATETABLE(tablename = TABLENAME) :
                 ')')
     SQL_EXECUTE(query_string, tablename)
 
-SQL_SELECT()
+# SQL_SELECT()

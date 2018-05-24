@@ -46,21 +46,39 @@ def compute_hull(all_points):
         if p.x < min_x:
             min_x = p.x
             start = p
-        elif p.x == min_x:
-            if p.y < start.y:
-                start = p
+        #elif p.x == min_x:
+        #    if p.y < start.y:
+        #        start = p
 
     point = start
     hull_points.append(start)
 
+    #if True:
+    #    print('point.x')
+    #    for i in points:
+    #        print(i.y)
+    #    print(point)
+    #    return
+
     far_point = None
     while far_point is not start:
+
         # get the first point (initial max) to use to compare with others
         p1 = None
         for p in points:
-            if p is point:
+            if p.x is point.x and p.y is point.y:
+                print('continue')
+                print(p.x)
+                print(p.y)
+                print(point.x)
+                print(point.y)
                 continue
             else:
+                print('first for')
+                print(p.x)
+                print(point.x)
+                print(p.y)
+                print(point.y)
                 p1 = p
                 break
 
@@ -68,16 +86,26 @@ def compute_hull(all_points):
 
         for p2 in points:
             # ensure we aren't comparing to self or pivot point
-            if p2 is point or p2 is p1:
+            #if p2 is point or p2 is p1:
+            if p2 is point or p2 is far_point:
                 continue
             else:
                 direction = _get_orientation(point, far_point, p2)
+                print("--------")
+                print('directioin %d' %direction)
+                print(point)
+                print(far_point)
+                print(p2)
+
                 if direction > 0:
                     far_point = p2
 
         hull_points.append(far_point)
         point = far_point
+        print(hull_points)
 
+    print('hull_points')
+    print(hull_points)
     return hull_points
 
 def get_hull_points(all_points):
@@ -171,8 +199,8 @@ def _draw_hull_points(_hull_points, img_height, img_width, title):
     perimeter = cv2.arcLength(cnt, True)
 
     cv2.drawContours(img, [cnt], 0, (0, 0, 255), 3)
-    cv2.putText(img, "area: %d" % area, (10, 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
-    cv2.putText(img, "perimeter: %f" % perimeter, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
+    cv2.putText(img, "area: %d [cm2]" % area, (10, 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
+    cv2.putText(img, "perimeter: %f [cm]" % perimeter, (10, 35), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
 
     cv2.putText(img, title, (int(img_width / 2), int(img_height - 15)), cv2.FONT_HERSHEY_SIMPLEX,
                 1.0, (0, 0, 0), 2)
@@ -211,30 +239,29 @@ def main():
     #for _ in range(50):
     #    _add(Point(random.randint(-100, 100), random.randint(-100, 100)))
     rWrist_x, rWrist_y, rWrist_z = ms.SQL_SELECT()
-    print(rWrist_y)
+
     all_points_xy, all_points_yz, all_points_xz = _add3(rWrist_x, rWrist_y, rWrist_z)
     #xy_points = _add(rWrist_x, rWrist_y)
     #yz_points = _add(rWrist_y, rWrist_z)
     #xz_points = _add(rWrist_x, rWrist_z)
-    print(all_points_xy)
-    print("all_points_xy")
-    print(all_points_yz)
-    print("all_points_yz")
-    print(all_points_xz)
-    print("all_points_xz")
-
-    #if True:
-    #    return
 
     hull_points_xy = get_hull_points(all_points_xy)
     hull_points_yz = get_hull_points(all_points_yz)
     hull_points_xz = get_hull_points(all_points_xz)
 
+    #if True:
+    #    return
+
     img1 = draw_image(hull_points_xy,"x-y")
     img2 = draw_image(hull_points_yz, "y-z")
     img3 = draw_image(hull_points_xz, "x-z")
+    display(img1, img2, img3, img1)
+    #if True:
+    #    return
+
+
     #img4 = draw_image(xz_points, "xz")
-    display(img1, img2, img3, img3)
+
 
 
 def _add3(array1, array2, array3):
@@ -246,10 +273,9 @@ def _add3(array1, array2, array3):
         temp = array1[i] + array2[i] + array3[i]
         if temp[0] == 0 or temp[0] == 1 or temp[1] == 0 or temp[1] == 1 or temp[2] == 0 or temp[2] == 1:
             continue
-        print(i)
-        temp1 = int((temp[0]) * 1000)
-        temp2 = int((temp[1]) * 1000)
-        temp3 = int((temp[2]) * 1000)
+        temp1 = int((temp[0]) * 100)
+        temp2 = int((temp[1]) * 100)
+        temp3 = int((temp[2]) * 100)
         p_xy = Point(temp1, temp2)
         p_yz = Point(temp2, temp3)
         p_xz = Point(temp1, temp3)
